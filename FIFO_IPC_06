@@ -1,1 +1,135 @@
+//Practical 6 : Interprocess Communication 
 
+File 1:process1.c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
+int main()
+{
+    int fd1, fd2;
+    char str[200];
+    char result[500];
+
+    // Create two FIFOs
+    unlink("fifo1");
+    unlink("fifo2");
+
+    mkfifo("fifo1", 0666);
+    mkfifo("fifo2", 0666);
+
+    printf("Enter sentences (type END to stop):\n");
+
+    // Open first FIFO for writing
+    fd1 = open("fifo1", O_WRONLY);
+
+    // Accept and send sentences
+    while (1)
+    {
+        fgets(str, sizeof(str), stdin);
+
+        if (strncmp(str, "END", 3) == 0)
+            break;
+
+        write(fd1, str, strlen(str));
+    }
+
+    close(fd1);
+
+    // Open second FIFO for reading
+    fd2 = open("fifo2", O_RDONLY);
+
+    // Read result from Process 2
+    int n = read(fd2, result, sizeof(result) - 1);
+
+    if (n > 0)
+    {
+        result[n] = '\0';
+        printf("\nResult received from Process 2:\n");
+        printf("%s", result);
+    }
+
+    close(fd2);
+
+    // Remove FIFO files
+    unlink("fifo1");
+    unlink("fifo2");
+
+    return 0;
+}
+
+
+File 2:process2.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <ctype.h>
+
+int main()
+{
+    int fd1, fd2;
+    char buffer[200];
+    char result[500];
+
+    int chars = 0, words = 0, lines = 0;
+    int inWord = 0;
+    int n;
+
+    // Open first FIFO for reading
+    fd1 = open("fifo1", O_RDONLY);
+
+    // Read sentences from Process 1
+    while ((n = read(fd1, buffer, sizeof(buffer))) > 0)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            chars++;
+
+            if (buffer[i] == '\n')
+                lines++;
+
+            if (isspace((unsigned char)buffer[i]))
+                inWord = 0;
+            else if (inWord == 0)
+            {
+                words++;
+                inWord = 1;
+            }
+        }
+    }
+
+    close(fd1);
+
+    // Create output file and write result
+    FILE *fp = fopen("output.txt", "w");
+
+    fprintf(fp, "Number of Characters = %d\n", chars);
+    fprintf(fp, "Number of Words = %d\n", words);
+    fprintf(fp, "Number of Lines = %d\n", lines);
+
+    fclose(fp);
+
+    // Read result from the file
+    fp = fopen("output.txt", "r");
+
+    int k = fread(result, 1, sizeof(result) - 1, fp);
+    result[k] = '\0';
+
+    fclose(fp);
+
+    // Open second FIFO for writing
+    fd2 = open("fifo2", O_WRONLY);
+
+    // Send file contents to Process 1
+    write(fd2, result, strlen(result));
+
+    close(fd2);
+
+    return 0;
+}
