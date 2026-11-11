@@ -1,1 +1,133 @@
+//Practical 8:Disc Scheduling
 
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    int n, i, j, head, temp;
+    int req[50], a[50], visited[50] = {0};
+    int disk_size, total, pos;
+
+    printf("Enter number of requests: ");
+    scanf("%d", &n);
+
+    printf("Enter disk size: ");
+    scanf("%d", &disk_size);
+
+    printf("Enter request sequence:\n");
+    for(i = 0; i < n; i++)
+        scanf("%d", &req[i]);
+
+    printf("Enter initial head position: ");
+    scanf("%d", &head);
+
+    // SSTF Algorithm
+    total = 0;
+    pos = head;
+
+    printf("\nSSTF Order: %d", head);
+
+    for(i = 0; i < n; i++)
+    {
+        int min = 9999, index = -1;
+
+        for(j = 0; j < n; j++)
+        {
+            if(!visited[j] && abs(req[j] - pos) < min)
+            {
+                min = abs(req[j] - pos);
+                index = j;
+            }
+        }
+
+        visited[index] = 1;
+        total += abs(req[index] - pos);
+        pos = req[index];
+
+        printf(" -> %d", pos);
+    }
+
+    printf("\nTotal SSTF Head Movement = %d\n", total);
+
+    // Sort requests in ascending order
+    for(i = 0; i < n; i++)
+        a[i] = req[i];
+
+    for(i = 0; i < n-1; i++)
+    {
+        for(j = 0; j < n-i-1; j++)
+        {
+            if(a[j] > a[j+1])
+            {
+                temp = a[j];
+                a[j] = a[j+1];
+                a[j+1] = temp;
+            }
+        }
+    }
+
+    // Find position of head
+    for(i = 0; i < n; i++)
+    {
+        if(a[i] >= head)
+            break;
+    }
+
+    // SCAN Algorithm (moving right first)
+    total = 0;
+    pos = head;
+
+    printf("\nSCAN Order: %d", head);
+
+    for(j = i; j < n; j++)
+    {
+        total += abs(a[j] - pos);
+        pos = a[j];
+        printf(" -> %d", pos);
+    }
+
+    total += abs((disk_size - 1) - pos);
+    pos = disk_size - 1;
+    printf(" -> %d", pos);
+
+    for(j = i-1; j >= 0; j--)
+    {
+        total += abs(a[j] - pos);
+        pos = a[j];
+        printf(" -> %d", pos);
+    }
+
+    printf("\nTotal SCAN Head Movement = %d\n", total);
+
+    // C-LOOK Algorithm (moving right first)
+    total = 0;
+    pos = head;
+
+    printf("\nC-LOOK Order: %d", head);
+
+    for(j = i; j < n; j++)
+    {
+        total += abs(a[j] - pos);
+        pos = a[j];
+        printf(" -> %d", pos);
+    }
+
+    if(i > 0)
+    {
+        total += abs(a[0] - pos);
+        pos = a[0];
+        printf(" -> %d", pos);
+
+        for(j = 1; j < i; j++)
+        {
+            total += abs(a[j] - pos);
+            pos = a[j];
+            printf(" -> %d", pos);
+        }
+    }
+
+    printf("\nTotal C-LOOK Head Movement = %d\n", total);
+
+    return 0;
+}
