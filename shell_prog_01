@@ -1,1 +1,77 @@
 
+FILE="addressbook.txt"
+createAddressBook()
+{
+if [ -e "$FILE" ];
+	then
+	echo "Address Book is Already Exists"
+	else
+	touch "$FILE"
+	echo "Address book created"
+	fi
+}
+viewAddressBook()
+{
+if [ ! -s "$FILE" ];then
+echo "Address book is empty orn does not exits."
+else
+echo "--Address Book -----"
+cat "$FILE"
+fi
+}
+insertRecord()
+{
+echo "Enter  record to insert in format: lastname,FirstNane,Email,Phone"
+read record
+echo "$record" >> "$FILE"
+echo "Record inserted"
+
+}
+deleteRecord()
+{
+echo "Enter search String to find the record"
+read search
+grep -n "$search" "$FILE"
+echo "Enterv line no delete"
+read line
+sed -i "${line}d" "$FILE"
+echo "record Deleted" 
+}
+ModifyRecord()
+{
+echo "Enter search String to find the record to modify"
+read search
+grep -n "$search" "$FILE"
+echo "Enter line no  modify"
+read line
+echo "Enter new Record (Last name,First name,Email,Phone)"
+read newRecord
+sed -i "${line}s/.*/$newRecord/" "$FILE"
+echo "record Modified" 
+}
+exitProgram()
+{
+echo "Exiting Good Bye"
+exit 0
+}
+while true; do
+echo 
+echo "===Address Book Menu======"
+echo "1. Create Address Book"
+echo "2. View Address Book"
+echo "3. Insert a record"
+echo "4. Delete a Record"
+echo "5. Modify a Record"
+echo "6. Exit"
+echo "Enter your choice:"
+read choice
+case $choice in 
+	1) createAddressBook;;
+	2) viewAddressBook;;
+	3) insertRecord ;;
+	4) deleteRecord;;
+	5) ModifyRecord;;
+	6) exitProgram;;
+	*)echo "Invalid Choice";;
+	esac
+done 
